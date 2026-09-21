@@ -1,0 +1,1535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>好莳威汀水台</title>
+
+    <!-- PWA 配置 -->
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#F2F2F7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <!-- iOS「添加到主屏幕」用的图标：不写这两行，iOS 会拿页面截图当图标 -->
+    <link rel="apple-touch-icon" href="./icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+
+    <style>
+        :root {
+            --bg: #F2F2F7;
+            --card: #FFFFFF;
+            --text: #1C1C1E;
+            --text2: #636366;
+            --text3: #8E8E93;
+            --sep: rgba(60, 60, 67, 0.09);
+            --blue: #007AFF;
+            --green: #34C759;
+            --orange: #FF9500;
+            --input-bg: #F9F9F9;
+            --border: #E5E5EA;
+            --r: 12px;
+            --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC",
+                    "Helvetica Neue", "Microsoft YaHei", sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            padding: 12px;
+            padding-top: calc(12px + env(safe-area-inset-top, 0px));
+            /* 底部固定 CTA 的避让 */
+            padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+            -webkit-font-smoothing: antialiased;
+            font-size: 15px;
+            line-height: 1.4;
+        }
+
+        .wrap { max-width: 600px; margin: 0 auto; }
+
+        /* ── 加载遮罩 ── */
+        #loading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--bg);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
+            padding: 20px;
+            text-align: center;
+        }
+        .loading-icon {
+            width: 104px;
+            height: 104px;
+            object-fit: contain;
+            margin-bottom: 22px;
+            border-radius: 22px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+        .loading-tip {
+            color: var(--text2);
+            font-size: 14px;
+            line-height: 1.6;
+            max-width: 300px;
+            background: var(--card);
+            padding: 12px 20px;
+            border-radius: 12px;
+            box-shadow: 0 0.5px 2px rgba(0, 0, 0, 0.04), 0 1px 6px rgba(0, 0, 0, 0.02);
+        }
+        .loading-tip strong { color: #FF3B30; font-weight: 600; }
+
+        /* ── Header ── */
+        .header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            padding: 8px 4px 14px;
+        }
+        .header h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            color: var(--text);
+        }
+        .header .ver {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text3);
+            background: rgba(118, 118, 128, 0.1);
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+
+        /* ── Card ── */
+        .card {
+            background: var(--card);
+            border-radius: var(--r);
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            box-shadow: 0 0.5px 2px rgba(0, 0, 0, 0.04), 0 1px 6px rgba(0, 0, 0, 0.02);
+        }
+
+        /* ── 表单行 ── */
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 40px;
+        }
+        .row + .row { margin-top: 2px; padding-top: 2px; }
+        .row-label {
+            /* flex + space-between：文字靠左、冒号贴右缘，3 字（厅时段）和 4 字（宴席类型）的冒号对齐 */
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text);
+            white-space: nowrap;
+            width: 68px;
+            flex-shrink: 0;
+        }
+        .row-label::after { content: ":"; margin-left: 1px; }
+        .row-input {
+            flex: 1;
+            min-width: 0;
+            height: 36px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0 12px;
+            font-size: 15px;
+            font-family: var(--font);
+            color: var(--text);
+            background: var(--input-bg);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+        .row-input:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.12);
+            background: #FFF;
+        }
+        .row-input::placeholder { color: #C7C7CC; font-size: 14px; }
+
+        /* ── 姓名行 + 字号调节 ── */
+        .name-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 40px;
+        }
+        .name-row + .name-row { margin-top: 2px; padding-top: 2px; }
+        .name-row .row-input { flex: 1; min-width: 0; }
+
+        .stepper {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            height: 36px;
+            flex-shrink: 0;
+            background: var(--input-bg);
+        }
+        .stepper button {
+            width: 34px;
+            height: 36px;
+            border: none;
+            background: transparent;
+            font-size: 18px;
+            font-weight: 400;
+            color: var(--blue);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font);
+        }
+        .stepper button:active { background: rgba(0, 122, 255, 0.08); }
+        .stepper-val {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            min-width: 46px;
+            text-align: center;
+            border-left: 1px solid var(--sep);
+            border-right: 1px solid var(--sep);
+            line-height: 36px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ── 可折叠面板（图片位置 / 姓名位置并排） ── */
+        .panel-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .panel {
+            flex: 1;
+            min-width: 0;
+            background: var(--card);
+            border-radius: var(--r);
+            box-shadow: 0 0.5px 2px rgba(0, 0, 0, 0.04), 0 1px 6px rgba(0, 0, 0, 0.02);
+            overflow: hidden;
+            /* 不设 align-self:flex-start：展开时两栏等高（图片位置 3 条滑杆定高，姓名位置跟随） */
+        }
+        .panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            cursor: pointer;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .panel-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            min-width: 0;
+        }
+        .panel-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+
+        .reset-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            border: none;
+            background: rgba(118, 118, 128, 0.08);
+            color: var(--text3);
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s, color 0.15s;
+            flex-shrink: 0;
+            padding: 0;
+        }
+        .reset-btn:active { background: rgba(0, 122, 255, 0.12); color: var(--blue); }
+        .reset-btn svg { width: 14px; height: 14px; }
+
+        .toggle-btn {
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            border: none;
+            background: rgba(118, 118, 128, 0.08);
+            color: var(--blue);
+            font-size: 18px;
+            font-weight: 300;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+            line-height: 1;
+            flex-shrink: 0;
+            padding: 0;
+            font-family: var(--font);
+        }
+        .toggle-btn:active { background: rgba(0, 122, 255, 0.12); }
+
+        .panel-body {
+            padding: 0 12px 12px;
+            max-height: 320px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.25s ease;
+            opacity: 1;
+        }
+        .panel-body.collapsed {
+            max-height: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            opacity: 0;
+        }
+
+        /* ── 滑杆 ── */
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+        .slider-row:last-child { margin-bottom: 0; }
+        .slider-lbl {
+            font-size: 12px;
+            color: var(--text3);
+            width: 26px;
+            flex-shrink: 0;
+            text-align: center;
+        }
+        .slider-wrap {
+            flex: 1;
+            min-width: 0;
+            position: relative;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            flex: 1;
+            min-width: 0;
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            outline: none;
+            background: #E5E5EA;
+            margin: 0;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #FFF;
+            box-shadow: 0 0.5px 3px rgba(0, 0, 0, 0.18), 0 1px 6px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.12s;
+        }
+        input[type="range"]:active::-webkit-slider-thumb { transform: scale(1.12); }
+        input[type="range"]::-moz-range-thumb {
+            width: 18px; height: 18px; border-radius: 50%;
+            background: #FFF; border: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); cursor: pointer;
+        }
+        .slider-val {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text3);
+            min-width: 34px;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+            flex-shrink: 0;
+        }
+
+        /* ── 预览区 ── */
+        .preview-area {
+            background: var(--card);
+            border-radius: var(--r);
+            padding: 14px;
+            margin-bottom: 10px;
+            box-shadow: 0 0.5px 2px rgba(0, 0, 0, 0.04), 0 1px 6px rgba(0, 0, 0, 0.02);
+        }
+        .preview-layout {
+            display: flex;
+            gap: 12px;
+            align-items: stretch;
+            justify-content: center;
+        }
+        /* 预览框：沿用旧版朴素样式（浅灰底 + 细边框），无渐变无花纹 */
+        .preview-canvas {
+            flex: 0 1 340px;
+            min-width: 0;
+            padding: 5px;
+            border-radius: 8px;
+            background: #fafafa;
+            border: 1px solid #ddd;
+            overflow: hidden;
+        }
+        #previewCanvas { display: block; width: 100%; height: auto; }
+
+        .photo-info {
+            margin-top: 8px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text3);
+            word-break: break-all;
+            line-height: 1.3;
+        }
+
+        .preview-right {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 72px;
+            flex-shrink: 0;
+        }
+        .side-btn {
+            flex: 1 1 0;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: var(--font);
+            transition: transform 0.15s;
+            padding: 10px 4px;
+        }
+        .side-btn:active { transform: scale(0.95); }
+        .side-btn svg { width: 22px; height: 22px; flex-shrink: 0; }
+        .side-btn-text {
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            writing-mode: vertical-rl;
+        }
+        .pick-side-btn { background: var(--blue); color: #FFF; }
+        .pick-side-btn:active { opacity: 0.85; }
+        .refresh-side-btn {
+            background: linear-gradient(180deg, #FFD60A, #FFCC02);
+            color: #1C1C1E;
+            box-shadow: 0 1px 4px rgba(255, 204, 2, 0.25);
+        }
+
+        /* ── 导出设置 ── */
+        .export-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .export-title { font-size: 15px; font-weight: 600; color: var(--text); }
+        .export-body {
+            margin-top: 12px;
+            max-height: 200px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, margin-top 0.3s ease, opacity 0.25s ease;
+            opacity: 1;
+        }
+        .export-body.collapsed {
+            max-height: 0;
+            margin-top: 0;
+            opacity: 0;
+        }
+        .export-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .export-item:last-child { margin-bottom: 0; }
+        .export-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text2);
+            min-width: 48px;
+            flex-shrink: 0;
+        }
+
+        /* ── 分段控件 ── */
+        .seg {
+            display: flex;
+            background: rgba(118, 118, 128, 0.1);
+            border-radius: 8px;
+            padding: 2px;
+            flex: 1;
+        }
+        .seg input { display: none; }
+        .seg label {
+            flex: 1;
+            text-align: center;
+            padding: 6px 0;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text);
+            border-radius: 7px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .seg input:checked + label {
+            background: #FFF;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 0.5px 1px rgba(0, 0, 0, 0.04);
+        }
+
+        /* ── 底部固定 CTA ── */
+        .cta-wrap {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+            background: rgba(242, 242, 247, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-top: 0.5px solid var(--sep);
+            z-index: 100;
+        }
+        .cta-inner { max-width: 600px; margin: 0 auto; }
+        .cta-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #34C759, #30B350);
+            color: #FFF;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: var(--font);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(52, 199, 89, 0.25);
+            transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+            letter-spacing: 0.3px;
+        }
+        .cta-btn:active { transform: scale(0.97); box-shadow: 0 1px 4px rgba(52, 199, 89, 0.25); }
+        .cta-btn:disabled { opacity: 0.7; }
+        .cta-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+        /* ── iOS 保存图片弹层 ──
+           iOS（尤其是「添加到主屏幕」后）的 <a download> 不可靠：常常只是跳到一张裸图，
+           什么都没保存。所以 iOS 上改为把图片显示出来，让用户长按「存储到照片」，
+           若能调用系统分享面板则提供一键按钮。 */
+        #saveSheet {
+            display: none;
+            position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 9999;
+            background: rgba(0, 0, 0, .74); padding: 16px; box-sizing: border-box;
+        }
+        #saveSheet.show { display: flex; align-items: center; justify-content: center; }
+        #saveSheet .sheet-card {
+            background: #fff; border-radius: 20px; padding: 16px; width: 100%;
+            max-width: 520px; max-height: 100%; box-sizing: border-box;
+            display: flex; flex-direction: column; gap: 12px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, .4);
+        }
+        #saveSheet .sheet-tip { font-size: 14px; color: var(--text2); line-height: 1.6; }
+        #saveSheet .sheet-tip b { color: #FF3B30; }
+        #saveSheet img {
+            width: 100%; height: auto; max-height: 56vh; object-fit: contain;
+            display: block; border-radius: 10px;
+            border: 1px solid var(--border);
+            -webkit-touch-callout: default; user-select: auto;
+        }
+        #saveSheet .sheet-btns { display: flex; gap: 10px; }
+        #saveSheet .sheet-btns button {
+            flex: 1; padding: 13px 8px; border: none; border-radius: 12px;
+            font-size: 15px; font-weight: 600; cursor: pointer; font-family: var(--font);
+        }
+        #saveSheetShare { background: var(--green); color: #fff; }
+        #saveSheetShut { background: rgba(118, 118, 128, 0.12); color: var(--text); }
+
+        ::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- 加载遮罩 -->
+    <div id="loading-overlay">
+        <img src="./icon-512.png" alt="Logo" class="loading-icon">
+        <div class="loading-tip">
+            首次加载大概需要<strong>3分钟</strong>，<br>请耐心等待...
+        </div>
+    </div>
+
+    <div class="wrap">
+
+        <!-- Header -->
+        <div class="header">
+            <h1>好莳威汀水台</h1>
+            <span class="ver">v3.0</span>
+        </div>
+
+        <!-- 基本信息 -->
+        <div class="card">
+            <div class="row">
+                <label class="row-label" for="timeInput">厅时段</label>
+                <input type="text" id="timeInput" class="row-input" placeholder="钻石厅午宴">
+            </div>
+            <div class="row">
+                <label class="row-label" for="typeInput">宴席类型</label>
+                <input type="text" id="typeInput" class="row-input" placeholder="例：“联姻宴”">
+            </div>
+        </div>
+
+        <!-- 姓名 + 字号调节 -->
+        <div class="card">
+            <div class="name-row">
+                <label class="row-label" for="groomInput">新郎姓名</label>
+                <input type="text" id="groomInput" class="row-input" placeholder="例：“新郎：张三”或“人名”">
+                <div class="stepper">
+                    <button type="button" id="groomMinus">−</button>
+                    <span class="stepper-val" id="groomSizeDisplay">100%</span>
+                    <button type="button" id="groomPlus">+</button>
+                </div>
+            </div>
+            <div class="name-row">
+                <label class="row-label" for="brideInput">新娘姓名</label>
+                <input type="text" id="brideInput" class="row-input" placeholder="例：“新娘：李四”或空着">
+                <div class="stepper">
+                    <button type="button" id="brideMinus">−</button>
+                    <span class="stepper-val" id="brideSizeDisplay">100%</span>
+                    <button type="button" id="bridePlus">+</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 位置调整：并排两栏，折叠联动 -->
+        <div class="panel-group">
+            <div class="panel">
+                <div class="panel-head" id="cropHead">
+                    <span class="panel-title">
+                        <button type="button" class="reset-btn" id="resetCropBtn" title="重置">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                        </button>
+                        图片位置
+                    </span>
+                    <div class="panel-actions">
+                        <button type="button" class="toggle-btn" id="toggleCropBtn" title="展开/折叠">+</button>
+                    </div>
+                </div>
+                <div class="panel-body collapsed" id="cropContent">
+                    <div class="slider-row">
+                        <span class="slider-lbl">左右</span>
+                        <div class="slider-wrap">
+                            <input type="range" id="hSlider" min="-2000" max="2000" value="0" step="20">
+                            <span class="slider-val" id="hVal">0</span>
+                        </div>
+                    </div>
+                    <div class="slider-row">
+                        <span class="slider-lbl">上下</span>
+                        <div class="slider-wrap">
+                            <input type="range" id="vSlider" min="-2000" max="2000" value="0" step="20">
+                            <span class="slider-val" id="vVal">0</span>
+                        </div>
+                    </div>
+                    <div class="slider-row">
+                        <span class="slider-lbl">缩放</span>
+                        <div class="slider-wrap">
+                            <input type="range" id="zSlider" min="100" max="300" value="100" step="5">
+                            <span class="slider-val" id="zVal">100%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel" id="nameControls" style="display:none;">
+                <div class="panel-head" id="nameHead">
+                    <span class="panel-title">
+                        <button type="button" class="reset-btn" id="resetNameBtn" title="重置">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                        </button>
+                        姓名位置
+                    </span>
+                    <div class="panel-actions">
+                        <button type="button" class="toggle-btn" id="toggleNameBtn" title="展开/折叠">+</button>
+                    </div>
+                </div>
+                <div class="panel-body collapsed" id="nameContent">
+                    <div class="slider-row">
+                        <span class="slider-lbl">左右</span>
+                        <div class="slider-wrap">
+                            <input type="range" id="nameHSlider" min="-1000" max="1000" value="0" step="10">
+                            <span class="slider-val" id="nameHVal">0</span>
+                        </div>
+                    </div>
+                    <div class="slider-row">
+                        <span class="slider-lbl">上下</span>
+                        <div class="slider-wrap">
+                            <input type="range" id="nameVSlider" min="-1000" max="1000" value="0" step="10">
+                            <span class="slider-val" id="nameVVal">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 预览区 -->
+        <div class="preview-area">
+            <div class="preview-layout">
+                <div class="preview-canvas" id="previewWrap">
+                    <canvas id="previewCanvas"></canvas>
+                </div>
+                <div class="preview-right">
+                    <button type="button" class="side-btn pick-side-btn" id="photoBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                        <span class="side-btn-text">选图</span>
+                    </button>
+                    <button type="button" class="side-btn refresh-side-btn" id="refreshBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                        <span class="side-btn-text">刷新预览</span>
+                    </button>
+                </div>
+            </div>
+            <div class="photo-info" id="photoInfo">未选择</div>
+            <input type="file" id="photoFile" accept="image/*" style="display:none;">
+        </div>
+
+        <!-- 导出设置 -->
+        <div class="card">
+            <div class="export-head" id="exportHead">
+                <span class="export-title">导出设置</span>
+                <div class="panel-actions">
+                    <button type="button" class="toggle-btn" id="toggleExportBtn" title="展开/折叠">+</button>
+                </div>
+            </div>
+            <div class="export-body collapsed" id="exportContent">
+                <div class="export-item">
+                    <span class="export-label">分辨率</span>
+                    <div class="seg">
+                        <input type="radio" name="resolution" id="res4k" value="4k" checked><label for="res4k">4K</label>
+                        <input type="radio" name="resolution" id="res1k" value="1k"><label for="res1k">1K</label>
+                    </div>
+                </div>
+                <div class="export-item">
+                    <span class="export-label">格式</span>
+                    <div class="seg">
+                        <input type="radio" name="format" id="fmtJpg" value="jpg" checked><label for="fmtJpg">JPG</label>
+                        <input type="radio" name="format" id="fmtPng" value="png"><label for="fmtPng">PNG</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 底部固定 CTA -->
+    <div class="cta-wrap">
+        <div class="cta-inner">
+            <button type="button" class="cta-btn" id="generateBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                <span id="generateBtnText">生成并保存图片</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- iOS / 已安装到主屏的 PWA：点「生成并保存图片」后弹出，长按图片即可存到相册 -->
+    <div id="saveSheet">
+        <div class="sheet-card">
+            <div class="sheet-tip">图片已生成。iPhone / iPad 上<b>长按下面这张图</b>，再选「存储到照片」即可保存。</div>
+            <img id="saveSheetImg" alt="生成的请柬">
+            <div class="sheet-btns">
+                <button type="button" id="saveSheetShare">📤 存到相册 / 分享</button>
+                <button type="button" id="saveSheetShut">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('✅ SW OK:', reg.scope))
+                    .catch(err => console.error('❌ SW Fail:', err));
+            });
+        }
+    </script>
+
+    <script>
+        /* ================================================================
+           底板：竖版 3545 × 5906
+           版式常量来源：PIL 像素差分（效果图 − back.png）+ 字体轮廓度量反算
+           底板自带内容（不要重复绘制）：顶部横线、四角花纹、格丽诗英文与酒店名
+           App 需要自己绘制：宴席类型 / 厅时段 / 新郎名 / 新娘名 / 用户照片
+           ================================================================ */
+        const BACKGROUND_URL = "./back.png";
+        // file:// 双击打开时改用同目录的 back-data.js（内嵌底板的 base64 版），
+        // 否则外链图片会污染画布、导出被浏览器拒绝。
+        // ★ 换了 back.png 之后，需要重新生成 back-data.js —— PowerShell 一行：
+        //   $b=[Convert]::ToBase64String([IO.File]::ReadAllBytes("back.png"));
+        //   [IO.File]::WriteAllText("back-data.js",'window.__BACK_DATA_URL="data:image/png;base64,'+$b+'";',(New-Object Text.UTF8Encoding($false)))
+        const FONT_URL = "./FZXiaoBiaoSong-B05S.woff2";
+        const BASE_FONT_SIZE = 192;
+
+        const CANVAS_W = 3545;
+        const CANVAS_H = 5906;
+        const TEXT_COLOR = "rgba(86, 53, 11, 1)";          // #56350B
+
+        // x / y 是 canvas fillText 的笔位与基线（画布坐标系，3545×5906）
+        const LAYOUT = {
+            hall:  { x:  876.1, y: 1200.2, size: 357.2 },  // 厅时段（加粗绘制）；原测量 858.1，按需求右移 18
+            type:  { x: 2427.2, y:  461.2, size: 324.4 },  // 宴席类型（横线右侧）
+            groom: { x:  828.7, y: 4557.2, size: 362.6 },  // 新郎姓名
+            bride: { x:  827.7, y: 5062.7, size: 362.6 }   // 新娘姓名
+        };
+
+        // 姓名输入形如「新郎：张三」（名字两个字）时，中间插入一个全角空格
+        // 这是原版 v2.0 的行为；置为 false 则完全按用户输入原样输出
+        const SPACING_TWO_CHAR_NAME = true;
+
+        // 姓名整块是否水平居中于画布。
+        // true  = 按「新郎/新娘两行中较宽的一行」水平居中，两行左边界对齐；
+        //         此时 LAYOUT.groom.x / bride.x 不再作为起点，仍可用「姓名位置」左右滑杆微调
+        // false = 回到固定的左起点（LAYOUT.groom.x / bride.x）
+        const NAME_AUTO_CENTER = true;
+
+        // 照片窗口（底板上的纯白留白区，1:1 覆盖）
+        const PHOTO = { x: 133, y: 1957, w: 3279, h: 1993 };
+
+        // 顶部横线（back.png 里烘焙的）量测结果（PIL 逐像素）：y 347-354 共 8px，
+        // x 126-2326，纯黑系剖面，周边近白背景 rgb(254,254,254)。
+        // 宴席类型文字右端固定为三字位置；横线右端 = 文字左端 - gap（两字变长 / 四字变短）
+        const HALL_LINE = {
+            yTop: 347, h: 8, x0: 126, xEnd: 2326,
+            bg: "rgb(254, 254, 254)",
+            gap: 101.2,   // = LAYOUT.type.x - xEnd，保证三字输入时完全复刻原版
+            // 原线纵剖面逐行颜色（x=1200 处取样），延长段照此复刻实现无缝拼接
+            profile: ["rgb(54,47,46)", "rgb(51,44,43)", "rgb(5,4,4)", "rgb(0,0,0)",
+                      "rgb(0,0,0)", "rgb(24,21,20)", "rgb(51,44,43)", "rgb(134,130,129)"]
+        };
+
+        // 只有新郎没有新娘时，新郎下移的补偿量
+        const SINGLE_GROOM_SHIFT = 225;
+
+        // 导出分辨率
+        const RES_HI = { width: CANVAS_W, height: CANVAS_H };
+        const RES_STD = { width: Math.round(CANVAS_W / 2), height: Math.round(CANVAS_H / 2) };
+
+        let userImageBase64 = null;
+        let cropOffsetX = 0, cropOffsetY = 0, cropZoom = 100;
+        let nameOffsetX = 0, nameOffsetY = 0;
+        let groomScale = 100, brideScale = 100;
+        let customFontFamily = 'serif';
+        let resourcesLoaded = false;
+        let bgImageObj = null;
+        // 底板是否以「已污染画布」的方式加载（本地 file:// 双击打开时会发生）
+        let bgTainted = false;
+
+        const elements = {
+            timeInput: document.getElementById('timeInput'),
+            typeInput: document.getElementById('typeInput'),
+            groomInput: document.getElementById('groomInput'),
+            brideInput: document.getElementById('brideInput'),
+            photoBtn: document.getElementById('photoBtn'),
+            photoFile: document.getElementById('photoFile'),
+            photoInfo: document.getElementById('photoInfo'),
+            cropContent: document.getElementById('cropContent'),
+            toggleCropBtn: document.getElementById('toggleCropBtn'),
+            resetCropBtn: document.getElementById('resetCropBtn'),
+            zSlider: document.getElementById('zSlider'),
+            hSlider: document.getElementById('hSlider'),
+            vSlider: document.getElementById('vSlider'),
+            nameControls: document.getElementById('nameControls'),
+            nameContent: document.getElementById('nameContent'),
+            toggleNameBtn: document.getElementById('toggleNameBtn'),
+            resetNameBtn: document.getElementById('resetNameBtn'),
+            nameHSlider: document.getElementById('nameHSlider'),
+            nameVSlider: document.getElementById('nameVSlider'),
+            toggleExportBtn: document.getElementById('toggleExportBtn'),
+            exportContent: document.getElementById('exportContent'),
+            previewCanvas: document.getElementById('previewCanvas'),
+            previewWrap: document.getElementById('previewWrap'),
+            refreshBtn: document.getElementById('refreshBtn'),
+            res4k: document.getElementById('res4k'),
+            res1k: document.getElementById('res1k'),
+            fmtJpg: document.getElementById('fmtJpg'),
+            fmtPng: document.getElementById('fmtPng'),
+            generateBtn: document.getElementById('generateBtn'),
+            generateBtnText: document.getElementById('generateBtnText'),
+            groomMinus: document.getElementById('groomMinus'),
+            groomPlus: document.getElementById('groomPlus'),
+            groomSizeDisplay: document.getElementById('groomSizeDisplay'),
+            brideMinus: document.getElementById('brideMinus'),
+            bridePlus: document.getElementById('bridePlus'),
+            brideSizeDisplay: document.getElementById('brideSizeDisplay'),
+            loadingOverlay: document.getElementById('loading-overlay')
+        };
+
+        /* 预览画布实际可用宽度：容器内容宽 − 左右内边距（22px 画框留白） */
+        function previewAvailWidth() {
+            const wrap = elements.previewWrap;
+            const cs = getComputedStyle(wrap);
+            const pad = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+            return Math.max(80, Math.floor(wrap.clientWidth - pad));
+        }
+
+        /* 滑杆旁边的数值 */
+        function syncSliderLabels() {
+            document.getElementById('zVal').textContent = cropZoom + '%';
+            document.getElementById('hVal').textContent = (cropOffsetX > 0 ? '+' : '') + cropOffsetX;
+            document.getElementById('vVal').textContent = (cropOffsetY > 0 ? '+' : '') + cropOffsetY;
+            document.getElementById('nameHVal').textContent = (nameOffsetX > 0 ? '+' : '') + nameOffsetX;
+            document.getElementById('nameVVal').textContent = (nameOffsetY > 0 ? '+' : '') + nameOffsetY;
+        }
+
+        function initCollapsibles() {
+            /* 图片位置 / 姓名位置：并排两栏，折叠联动 —— 点任意一个，两个一起收起/展开 */
+            const pair = [
+                { body: elements.cropContent, btn: elements.toggleCropBtn },
+                { body: elements.nameContent, btn: elements.toggleNameBtn }
+            ];
+            const setPair = (collapsed) => {
+                pair.forEach(p => {
+                    p.body.classList.toggle('collapsed', collapsed);
+                    p.btn.textContent = collapsed ? '+' : '−';
+                });
+            };
+            const flipPair = () => setPair(!elements.cropContent.classList.contains('collapsed'));
+
+            setPair(true);                                    // 默认收起
+            elements.toggleCropBtn.addEventListener('click', (e) => { e.stopPropagation(); flipPair(); });
+            elements.toggleNameBtn.addEventListener('click', (e) => { e.stopPropagation(); flipPair(); });
+            document.getElementById('cropHead').addEventListener('click', flipPair);
+            document.getElementById('nameHead').addEventListener('click', flipPair);
+
+            elements.resetCropBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                elements.zSlider.value = 100;
+                elements.hSlider.value = 0; elements.vSlider.value = 0;
+                cropZoom = 100; cropOffsetX = 0; cropOffsetY = 0;
+                syncSliderLabels(); updatePreview();
+            });
+            elements.resetNameBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                elements.nameHSlider.value = 0; elements.nameVSlider.value = 0;
+                nameOffsetX = 0; nameOffsetY = 0;
+                syncSliderLabels(); updatePreview();
+            });
+
+            /* 导出设置：独立折叠 */
+            const setExport = (collapsed) => {
+                elements.exportContent.classList.toggle('collapsed', collapsed);
+                elements.toggleExportBtn.textContent = collapsed ? '+' : '−';
+            };
+            const flipExport = () => setExport(!elements.exportContent.classList.contains('collapsed'));
+
+            setExport(true);
+            elements.toggleExportBtn.addEventListener('click', (e) => { e.stopPropagation(); flipExport(); });
+            document.getElementById('exportHead').addEventListener('click', flipExport);
+        }
+
+        /* 加载底板。
+           useCORS=true：走跨源匿名请求，成功后画布不会被「污染」，导出才能用；
+           file:// 双击打开时页面 origin 是 null，CORS 请求会被浏览器直接拒绝，
+           此时退回普通加载 —— 底板仍能显示，但画布被污染、无法导出，界面上会给出提示。
+           注意：crossOrigin 必须在 src 之前设置，写在后面不生效。 */
+        function loadBgImage(url, useCORS) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                if (useCORS) img.crossOrigin = "anonymous";   // 必须在 src 之前
+                img.onload = () => resolve(img);
+                img.onerror = () => resolve(null);
+                img.src = url;
+            });
+        }
+
+        /* file:// 场景下改用内嵌底板：动态加载同目录的 back-data.js，取出 data: URL。
+           data: URL 不算跨源，所以画布不会被污染，双击打开也能正常导出。
+           这里用 script 标签而不是 fetch —— file:// 下 fetch 会被浏览器直接拒绝。 */
+        function loadBgFromDataScript() {
+            return new Promise((resolve) => {
+                if (window.__BACK_DATA_URL) {
+                    resolve(loadBgImage(window.__BACK_DATA_URL, false));
+                    return;
+                }
+                const s = document.createElement('script');
+                s.src = './back-data.js';
+                s.onload = () => resolve(window.__BACK_DATA_URL ? loadBgImage(window.__BACK_DATA_URL, false) : null);
+                s.onerror = () => resolve(null);
+                document.head.appendChild(s);
+            });
+        }
+
+        async function preloadResources() {
+            const loadFontPromise = (async () => {
+                if (!FONT_URL) return 'serif';
+                const fontName = 'FZXiaoBiaoSong';
+                const style = document.createElement('style');
+                style.textContent = `@font-face { font-family: "${fontName}"; src: url('${FONT_URL}') format("woff2"); }`;
+                document.head.appendChild(style);
+                try {
+                    await document.fonts.load(`${BASE_FONT_SIZE}px "${fontName}"`);
+                    return fontName;
+                } catch (e) { return 'serif'; }
+            })();
+
+            const loadBgPromise = (async () => {
+                // 1) file:// 双击打开：外链图片会被浏览器判为跨源，画布被「污染」→ 无法导出。
+                //    改用同目录的 back-data.js（data: URL 不算跨源），画布保持干净。
+                if (location.protocol === 'file:') {
+                    const dataImg = await loadBgFromDataScript();
+                    if (dataImg) { bgTainted = false; return dataImg; }
+                }
+                // 2) 常规：按 CORS 方式加载外链底板，成功则画布不污染，导出可用。
+                const withCORS = await loadBgImage(BACKGROUND_URL, true);
+                if (withCORS) { bgTainted = false; return withCORS; }
+                // 3) 兜底：退回普通加载，至少保证预览能看到底板；
+                //    此时浏览器会禁止导出，导出时会给出中文提示。
+                const plain = await loadBgImage(BACKGROUND_URL, false);
+                bgTainted = !!plain;
+                return plain;
+            })();
+
+            const [fontFamily, bgImg] = await Promise.all([loadFontPromise, loadBgPromise]);
+
+            customFontFamily = fontFamily;
+            bgImageObj = bgImg;
+            resourcesLoaded = true;
+
+            if (elements.loadingOverlay) {
+                elements.loadingOverlay.style.opacity = '0';
+                setTimeout(() => elements.loadingOverlay.style.display = 'none', 500);
+            }
+
+            updatePreview();
+        }
+
+        function initEventListeners() {
+            initCollapsibles();
+            elements.photoBtn.addEventListener('click', () => elements.photoFile.click());
+            elements.photoFile.addEventListener('change', handlePhotoUpload);
+
+            elements.zSlider.addEventListener('input', (e) => { cropZoom = parseInt(e.target.value); syncSliderLabels(); updatePreview(); });
+            elements.hSlider.addEventListener('input', (e) => { cropOffsetX = parseInt(e.target.value); syncSliderLabels(); updatePreview(); });
+            elements.vSlider.addEventListener('input', (e) => { cropOffsetY = parseInt(e.target.value); syncSliderLabels(); updatePreview(); });
+            elements.nameHSlider.addEventListener('input', (e) => { nameOffsetX = parseInt(e.target.value); syncSliderLabels(); updatePreview(); });
+            elements.nameVSlider.addEventListener('input', (e) => { nameOffsetY = parseInt(e.target.value); syncSliderLabels(); updatePreview(); });
+
+            elements.groomPlus.addEventListener('click', () => { groomScale = Math.min(groomScale + 10, 300); updateSizeUI(); updatePreview(); });
+            elements.groomMinus.addEventListener('click', () => { groomScale = Math.max(groomScale - 10, 20); updateSizeUI(); updatePreview(); });
+            elements.bridePlus.addEventListener('click', () => { brideScale = Math.min(brideScale + 10, 300); updateSizeUI(); updatePreview(); });
+            elements.brideMinus.addEventListener('click', () => { brideScale = Math.max(brideScale - 10, 20); updateSizeUI(); updatePreview(); });
+
+            // 刷新预览：设计稿式的「淡出 + 缩一下」动效
+            elements.refreshBtn.addEventListener('click', () => {
+                const w = elements.previewWrap;
+                w.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+                w.style.opacity = '0.4';
+                w.style.transform = 'scale(0.97)';
+                setTimeout(() => {
+                    updatePreview();
+                    w.style.opacity = '1';
+                    w.style.transform = 'scale(1)';
+                }, 240);
+            });
+
+            elements.generateBtn.addEventListener('click', generateImage);
+
+            [elements.timeInput, elements.groomInput, elements.brideInput, elements.typeInput].forEach(input => {
+                input.addEventListener('input', updatePreview);
+            });
+        }
+
+        function updateSizeUI() {
+            elements.groomSizeDisplay.textContent = groomScale + '%';
+            elements.brideSizeDisplay.textContent = brideScale + '%';
+        }
+
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                elements.photoInfo.textContent = "未选择";
+                return;
+            }
+
+            const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+            if (!validImageTypes.includes(file.type)) {
+                alert("❌ 请上传图片格式（JPG/PNG/WEBP/GIF）");
+                event.target.value = '';
+                elements.photoInfo.textContent = "未选择";
+                userImageBase64 = null;
+                updatePreview();
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                userImageBase64 = e.target.result;
+                const displayName = file.name.length > 15 ? file.name.substring(0, 15) + '...' : file.name;
+                elements.photoInfo.textContent = displayName;
+                checkNameControls();
+                updatePreview();
+            };
+            reader.onerror = function() {
+                alert("❌ 图片读取失败，请重试");
+                event.target.value = '';
+                elements.photoInfo.textContent = "未选择";
+                userImageBase64 = null;
+                updatePreview();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function checkNameControls() {
+            const hasName = elements.groomInput.value.trim() || elements.brideInput.value.trim();
+            elements.nameControls.style.display = hasName ? 'block' : 'none';
+        }
+
+        function getResolution() {
+            if (elements.res4k.checked) return RES_HI;
+            return RES_STD;
+        }
+
+        function loadFont(size) { return `${size}px "${customFontFamily}"`; }
+
+        /* 等比覆盖裁切到目标尺寸；可再叠加用户缩放与平移（全部在目标像素尺度上计算） */
+        function cropToTarget(img, targetW, targetH, zoomPct, offX, offY) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const ratio = targetW / targetH;
+            const origRatio = img.width / img.height;
+            let baseW, baseH;
+            if (origRatio > ratio) { baseH = targetH; baseW = baseH * origRatio; }
+            else { baseW = targetW; baseH = baseW / origRatio; }
+
+            const z = Math.max(1, zoomPct / 100);
+            const newW = Math.round(baseW * z);
+            const newH = Math.round(baseH * z);
+
+            canvas.width = newW; canvas.height = newH;
+            ctx.drawImage(img, 0, 0, newW, newH);
+
+            let left = (newW - targetW) / 2;
+            let top = (newH - targetH) / 2;
+            left = Math.max(0, Math.min(left + offX, newW - targetW));
+            top = Math.max(0, Math.min(top + offY, newH - targetH));
+
+            const cropCanvas = document.createElement('canvas');
+            cropCanvas.width = targetW; cropCanvas.height = targetH;
+            cropCanvas.getContext('2d').drawImage(canvas, left, top, targetW, targetH, 0, 0, targetW, targetH);
+            return cropCanvas;
+        }
+
+        function drawText(ctx, x, y, text, font, fill) {
+            ctx.font = font; ctx.fillStyle = fill; ctx.fillText(text, x, y);
+        }
+        /* 轻描边模拟加粗 */
+        function drawBoldText(ctx, x, y, text, font, fill) {
+            ctx.font = font; ctx.fillStyle = fill;
+            [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]].forEach(([dx,dy]) => ctx.fillText(text, x+dx, y+dy));
+            ctx.fillText(text, x, y);
+        }
+
+        function processNameSpacing(name) {
+            if (!name) return name;
+            if (!SPACING_TWO_CHAR_NAME) return name;
+            const prefixes = ["新郎：", "新娘："];
+            for (let prefix of prefixes) {
+                if (name.startsWith(prefix)) {
+                    const realName = name.substring(prefix.length);
+                    if (realName.length === 2) {
+                        return prefix + realName[0] + "\u3000" + realName[1];
+                    }
+                }
+            }
+            return name;
+        }
+
+        /* 单个字串按「宽度不超过可用区域」自动收缩，避免超出画布边界 */
+        function fitFontSize(ctx, text, wantSize, maxWidth) {
+            ctx.font = loadFont(wantSize);
+            const w = ctx.measureText(text).width;
+            if (w <= maxWidth || w <= 0) return wantSize;
+            return wantSize * (maxWidth / w);
+        }
+
+        async function generateCompositeImage(isPreview = false) {
+            const canvas = document.createElement('canvas');
+            let renderW = CANVAS_W, renderH = CANVAS_H;
+            if (isPreview) {
+                renderW = Math.round(Math.min(1400, Math.max(360, previewAvailWidth() * 2)));
+                renderH = Math.round(renderW * (CANVAS_H / CANVAS_W));
+            }
+
+            canvas.width = renderW;
+            canvas.height = renderH;
+            const ctx = canvas.getContext('2d');
+            const s = renderW / CANVAS_W;      // 统一缩放比
+
+            if (bgImageObj) {
+                ctx.drawImage(bgImageObj, 0, 0, renderW, renderH);
+            } else {
+                ctx.fillStyle = "#ddd";
+                ctx.fillRect(0, 0, renderW, renderH);
+            }
+
+            const hallTime = elements.timeInput.value.trim() || "什么厅晚宴";
+            const groomRaw = elements.groomInput.value.trim();
+            const brideRaw = elements.brideInput.value.trim();
+            const groom = processNameSpacing(groomRaw);
+            const bride = processNameSpacing(brideRaw);
+
+            const weddingType = elements.typeInput.value.trim() || "没写宴";
+
+            const fontScale = s;                    // 画布逻辑字号 → 实际字号
+            const globalMaxW = CANVAS_W - 40;       // 画布安全宽度
+
+            // 厅时段：常规 5 字；超过 5 字时按 5/n 缩小字号（总宽≈五字），
+            // 并上移字号差的一半（6 字约 30 画布像素），保证与五字情况大致对齐
+            if (hallTime) {
+                const want = LAYOUT.hall.size * fontScale;
+                const charCount = [...hallTime].length;
+                let want2 = want;
+                if (charCount > 5) want2 = want * 5 / charCount;
+                const size = fitFontSize(ctx, hallTime, want2, (globalMaxW - LAYOUT.hall.x) * s);
+                const rise = (want - size) / 2;
+                drawBoldText(ctx, LAYOUT.hall.x * s, (LAYOUT.hall.y - rise) * s, hallTime, loadFont(size), TEXT_COLOR);
+            }
+
+            // 宴席类型：右端固定为三字时的右端（用实际字体现场量「联姻宴」宽度）；
+            // 左侧横线右端 = 文字左端 - gap，随字数伸缩，间距恒定
+            if (weddingType) {
+                const want = LAYOUT.type.size * fontScale;
+                ctx.font = loadFont(want);
+                const xRight = LAYOUT.type.x * s + ctx.measureText("联姻宴").width;
+                // 整块（横线起点 + 间距 + 文字）不许超出画布安全区
+                const avail = xRight - (HALL_LINE.x0 + HALL_LINE.gap) * s;
+                const size = fitFontSize(ctx, weddingType, want, avail);
+                ctx.font = loadFont(size);
+                const tx = xRight - ctx.measureText(weddingType).width;
+
+                const newEnd = tx - HALL_LINE.gap * s;
+                if (newEnd > HALL_LINE.xEnd * s + 1) {
+                    // 横线变长（如两字）：从原右端向右逐行复刻剖面，无缝延长
+                    const xStart = HALL_LINE.xEnd * s + 1;
+                    for (let i = 0; i < HALL_LINE.h; i++) {
+                        ctx.fillStyle = HALL_LINE.profile[i];
+                        ctx.fillRect(xStart, (HALL_LINE.yTop + i) * s, newEnd - xStart, 1 * s);
+                    }
+                } else if (newEnd < HALL_LINE.xEnd * s - 1) {
+                    // 横线变短（如四字）：用背景色盖掉右段（该区域是干净的近白背景）
+                    ctx.fillStyle = HALL_LINE.bg;
+                    ctx.fillRect(newEnd + 1, (HALL_LINE.yTop - 4) * s,
+                                 (HALL_LINE.xEnd - newEnd + 20) * s, (HALL_LINE.h + 8) * s);
+                }
+                drawText(ctx, tx, LAYOUT.type.y * s, weddingType, loadFont(size), TEXT_COLOR);
+            }
+
+            // 姓名：先量出两行各自的实际宽度，再决定水平起点
+            let gym = (LAYOUT.groom.y + nameOffsetY) * s;
+            let bym = (LAYOUT.bride.y + nameOffsetY) * s;
+            if (groom && !bride) gym += SINGLE_GROOM_SHIFT * s;
+
+            let gSize = 0, gW = 0, bSize = 0, bW = 0;
+            if (groom) {
+                const want = LAYOUT.groom.size * (groomScale / 100) * fontScale;
+                gSize = fitFontSize(ctx, groom, want, globalMaxW * s);
+                ctx.font = loadFont(gSize);
+                gW = ctx.measureText(groom).width;
+            }
+            if (bride) {
+                const want = LAYOUT.bride.size * (brideScale / 100) * fontScale;
+                bSize = fitFontSize(ctx, bride, want, globalMaxW * s);
+                ctx.font = loadFont(bSize);
+                bW = ctx.measureText(bride).width;
+            }
+
+            // 水平起点：整块居中（按两行中较宽的一行算，两行左边界对齐）；滑杆仍可微调
+            const nx = (NAME_AUTO_CENTER
+                ? (renderW - Math.max(gW, bW)) / 2
+                : LAYOUT.groom.x * s) + nameOffsetX * s;
+
+            if (groom) drawText(ctx, nx, gym, groom, loadFont(gSize), TEXT_COLOR);
+            if (bride) drawText(ctx, nx, bym, bride, loadFont(bSize), TEXT_COLOR);
+
+            // 用户照片：等比覆盖裁切后铺满照片窗口
+            if (userImageBase64) {
+                try {
+                    const userImg = new Image();
+                    userImg.src = userImageBase64;
+                    await new Promise(r => { userImg.onload = r; });
+                    const processedImg = cropToTarget(userImg, PHOTO.w, PHOTO.h, cropZoom, cropOffsetX, cropOffsetY);
+                    ctx.drawImage(processedImg, PHOTO.x * s, PHOTO.y * s, PHOTO.w * s, PHOTO.h * s);
+                } catch (e) { console.error(e); }
+            }
+
+            if (!isPreview) {
+                const targetRes = getResolution();
+                if (targetRes.width !== renderW || targetRes.height !== renderH) {
+                    const fC = document.createElement('canvas');
+                    fC.width = targetRes.width; fC.height = targetRes.height;
+                    fC.getContext('2d').drawImage(canvas, 0, 0, targetRes.width, targetRes.height);
+                    return fC;
+                }
+            }
+            return canvas;
+        }
+
+        async function updatePreview() {
+            const canvas = elements.previewCanvas;
+            const pCtx = canvas.getContext('2d');
+            const w = previewAvailWidth();
+            canvas.width = w;
+            canvas.height = 200;
+            pCtx.fillStyle = "#f0f0f0";
+            pCtx.fillRect(0, 0, w, 200);
+
+            if (!resourcesLoaded) {
+                pCtx.fillStyle = "#999"; pCtx.font = "14px Arial"; pCtx.textAlign = "center";
+                pCtx.fillText("资源加载中...", w / 2, 100);
+                return;
+            }
+
+            try {
+                const composite = await generateCompositeImage(true);
+                const h = Math.floor(w * composite.height / composite.width);
+                canvas.width = w;
+                canvas.height = h;
+                pCtx.drawImage(composite, 0, 0, w, h);
+                checkNameControls();
+            } catch (e) {
+                pCtx.fillStyle = "red"; pCtx.fillText("出错", w / 2, 100);
+            }
+        }
+
+        /* ================================================================
+           iOS 保存图片
+           ----------------------------------------------------------------
+           为什么单独处理：iOS 上 <a download> 支持不完整，尤其在「添加到主屏幕」
+           变成独立 PWA 之后，点下载常常只是导航到一张裸图片、不会存进相册。
+           做法：把生成好的图显示在弹层里，让用户长按保存；若浏览器支持
+           Web Share API（iOS 15+ / Android）再给一个走系统分享面板的按钮。
+           其他平台（桌面、Android 浏览器）维持原来的自动下载，行为完全不变。
+           ================================================================ */
+        let saveSheetUrl = null;
+
+        function isIOS() {
+            const ua = navigator.userAgent || "";
+            if (/iPhone|iPad|iPod/i.test(ua)) return true;
+            // iPadOS 13+ 的 Safari 会把 UA 伪装成 macOS，用触点数识别
+            return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+        }
+
+        function closeSaveSheet() {
+            const sheet = document.getElementById("saveSheet");
+            if (sheet) sheet.classList.remove("show");
+            if (saveSheetUrl) {
+                const u = saveSheetUrl;
+                saveSheetUrl = null;
+                setTimeout(() => URL.revokeObjectURL(u), 1000);
+            }
+        }
+
+        function showSaveSheet(blob, filename) {
+            const sheet = document.getElementById("saveSheet");
+            const img = document.getElementById("saveSheetImg");
+            const shareBtn = document.getElementById("saveSheetShare");
+            if (!sheet || !img) return;
+
+            if (saveSheetUrl) { URL.revokeObjectURL(saveSheetUrl); saveSheetUrl = null; }
+            saveSheetUrl = URL.createObjectURL(blob);
+            img.src = saveSheetUrl;
+            sheet.classList.add("show");
+
+            // 支持 Web Share（带文件）才显示分享按钮，否则用户只能长按
+            let canShareFile = false;
+            try {
+                canShareFile = !!(navigator.canShare && navigator.canShare({
+                    files: [new File([blob], filename, { type: blob.type || "image/png" })]
+                }));
+            } catch (e) { canShareFile = false; }
+            shareBtn.style.display = canShareFile ? "" : "none";
+
+            shareBtn.onclick = async () => {
+                try {
+                    const file = new File([blob], filename, { type: blob.type || "image/png" });
+                    await navigator.share({ files: [file], title: "请柬" });
+                    closeSaveSheet();
+                } catch (err) {
+                    if (err && err.name === "AbortError") return;   // 用户自己取消，不打扰
+                    alert("当前环境不支持直接分享，请长按上面那张图 → 「存储到照片」。");
+                }
+            };
+        }
+
+        const CTA_IDLE_TEXT = "生成并保存图片";
+
+        async function generateImage() {
+            if (!resourcesLoaded) { alert("资源加载中..."); return; }
+            const btn = elements.generateBtn;
+            const txt = elements.generateBtnText;
+            if (btn.disabled) return;
+
+            btn.disabled = true;
+            txt.textContent = "生成中...";
+            let saved = false;
+
+            try {
+                const composite = await generateCompositeImage(false);
+                const fmt = elements.fmtJpg.checked ? 'image/jpeg' : 'image/png';
+
+                // 画布被「污染」时 toBlob 会直接抛错，这里捕获并给出可操作的中文提示
+                let blob = null;
+                try {
+                    blob = await new Promise((resolve, reject) => {
+                        composite.toBlob(b => b ? resolve(b) : reject(new Error("empty blob")), fmt, 0.95);
+                    });
+                } catch (err) {
+                    alert("❌ 无法导出图片\n\n"
+                        + "原因：双击打开（file://）时，浏览器会把本地的底板图当作跨源资源，\n"
+                        + "画布被「污染」后就禁止导出 —— 浏览器的安全限制，与代码无关。\n"
+                        + "部署到线上（https）打开不会有这个问题，「生成并保存图片」正常。\n\n"
+                        + "在本机想导出，任选其一：\n"
+                        + "  1) 确认本文件夹里有 back-data.js（内嵌的底板副本，407 KB）——\n"
+                        + "     有这个文件时双击 index.html 就能正常导出；\n"
+                        + "  2) 部署上线（https）后再导出。");
+                    return;
+                }
+
+                const g = elements.groomInput.value.trim();
+                const b2 = elements.brideInput.value.trim();
+                let name = "wedding";
+                if (g && b2) name = `${g} ${b2}`;
+                else if (g) name = g;
+                else if (b2) name = b2;
+                const filename = `${name}.${fmt === 'image/jpeg' ? 'jpg' : 'png'}`;
+
+                // iOS（含「添加到主屏幕」的 PWA）：<a download> 不可靠 → 弹图让用户长按保存
+                if (isIOS()) { showSaveSheet(blob, filename); return; }
+
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                saved = true;
+            } catch (e) {
+                alert("❌ " + e.message);
+            } finally {
+                btn.disabled = false;
+                if (saved) {
+                    txt.textContent = "✓ 已保存";
+                    setTimeout(() => {
+                        if (txt.textContent === "✓ 已保存") txt.textContent = CTA_IDLE_TEXT;
+                    }, 2000);
+                } else {
+                    txt.textContent = CTA_IDLE_TEXT;
+                }
+            }
+        }
+
+        async function initApp() {
+            elements.res4k.checked = true;
+            initEventListeners();
+            syncSliderLabels();
+            preloadResources();
+
+            // iOS 保存弹层：关闭按钮 + Esc（弹层在脚本之后，必须等 DOM 就绪再绑）
+            const shut = document.getElementById('saveSheetShut');
+            if (shut) shut.onclick = closeSaveSheet;
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSaveSheet(); });
+        }
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+
+
+<script>
+/* ==== 测试注入（仅 _test.html）==== */
+window.addEventListener('DOMContentLoaded', () => {
+    const q = new URLSearchParams(location.search);
+    const t = q.get('t') || '';
+    const mark = document.createElement('div');
+    mark.id = 'TESTMARK';
+    mark.textContent = 'TESTMODE=' + t;
+    document.body.appendChild(mark);
+    if (t === 'hall6') document.getElementById('timeInput').value = '奥斯卡厅午宴';
+    if (t === 'hall7') document.getElementById('timeInput').value = '奥斯卡大厅午宴';
+    if (t === 'type2') document.getElementById('typeInput').value = '寿宴';
+    if (t === 'type4') document.getElementById('typeInput').value = '联姻婚宴';
+    if (!t) return;
+    const iv = setInterval(() => {
+        if (window.resourcesLoaded === true || (typeof resourcesLoaded !== 'undefined' && resourcesLoaded)) {
+            clearInterval(iv);
+            runMeasure();
+        }
+    }, 200);
+});
+async function runMeasure() {
+    try {
+        const cv = await generateCompositeImage(false);   // 4K 全尺寸 3545x5906
+        const ctx = cv.getContext('2d');
+        const isDark = (d, w, x, y) => {
+            const i = (y * w + x) * 4;
+            return (d[i] + d[i+1] + d[i+2]) / 3 < 170;
+        };
+        // 1) 横线右端：沿 y=350 从 x=150 向右走连续暗段
+        const ld = ctx.getImageData(0, 348, cv.width, 4).data;   // y 348-351（纯黑核心行）
+        let lineEnd = -1;
+        for (let x = 150; x < cv.width; x++) {
+            let dark = false;
+            for (let dy = 0; dy < 4; dy++) if (isDark(ld, cv.width, x, dy)) { dark = true; break; }
+            if (dark) lineEnd = x; else if (x > 300) break;
+        }
+        // 2) 宴席类型墨迹：y 360-465（线体之下），x 1800+ 区域
+        const td = ctx.getImageData(1800, 360, cv.width - 1800, 105).data;
+        let tMinX = -1, tMaxX = -1;
+        for (let x = 0; x < cv.width - 1800; x++) {
+            for (let dy = 0; dy < 105; dy++) {
+                if (isDark(td, cv.width - 1800, x, dy)) {
+                    if (tMinX < 0) tMinX = x + 1800;
+                    tMaxX = x + 1800;
+                    break;
+                }
+            }
+        }
+        // 3) 厅时段墨迹上下沿：x 1000-2600, y 860-1300（避开烘焙花纹的横向装饰带）
+        const hd = ctx.getImageData(1000, 860, 1600, 440).data;
+        let hTop = -1, hBot = -1;
+        for (let dy = 0; dy < 440; dy++) {
+            for (let x = 0; x < 1600; x++) {
+                if (isDark(hd, 1600, x, dy)) {
+                    if (hTop < 0) hTop = dy + 860;
+                    hBot = dy + 860;
+                    x = 1600;
+                }
+            }
+        }
+        const d = document.createElement('div');
+        d.id = 'TESTRESULT';
+        d.textContent = 'LINE_END=' + lineEnd
+            + '; TYPE_INK=' + tMinX + '-' + tMaxX
+            + '; HALL_INK_Y=' + hTop + '-' + hBot
+            + '; HALL=' + document.getElementById('timeInput').value
+            + '; TYPE=' + document.getElementById('typeInput').value;
+        document.body.appendChild(d);
+    } catch (e) {
+        const d = document.createElement('div');
+        d.id = 'TESTRESULT';
+        d.textContent = 'TESTERROR=' + e.message;
+        document.body.appendChild(d);
+    }
+}
+</script>
+</body>
+</html>
