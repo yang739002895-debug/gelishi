@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wedding-pwa-ui-v3'; // UI 升级版第 3 稿（预览图 364px/按钮收窄 60px）；缓存优先，每次改文件都必须改这个版本号
+const CACHE_NAME = 'wedding-pwa-ui-v4'; // UI 升级版第 4 稿（按钮再收窄至 52px）；缓存优先，每次改文件都必须改这个版本号
 const urlsToCache = [
   './index.html',
   './manifest.json',
