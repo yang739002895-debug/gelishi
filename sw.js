@@ -1,4 +1,4 @@
-const CACHE_NAME = 'wedding-pwa-ui-v6'; // 第 6 稿（姓名位置面板改常驻，不再由姓名输入触发显隐）；缓存优先，每次改文件都必须改这个版本号
+const CACHE_NAME = 'wedding-pwa-ui-v9'; // 第 9 稿（底栏改一行式：药丸+分隔线+按钮；选图/刷新按钮收窄 48px、预览框 368px）；缓存优先，每次改文件都必须改这个版本号
 const urlsToCache = [
   './index.html',
   './manifest.json',

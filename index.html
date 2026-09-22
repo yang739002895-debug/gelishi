@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<script>
-!(function(j,a,g){j.__itrace_conf = {bid: 'f43basl8-6nqu7l3w',rel: '0.0.1', spa: true, uid: '', plugins:['jserror','interface','perf','resource','flow','blank']};var b = a.createElement("script");var d = a.getElementsByTagName("script")[0];b.type = "text/javascript";b.crossorigin = true;b.async = true;b.onload = function(){j.__itrace && j.__itrace.setReady()};d.parentNode.insertBefore(b,d);b.src = g})(window, document, "https://g.alicdn.com/woodpeckerx/itrace-next/itrace.iife.js")
-</script>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>好莳威汀水台</title>
@@ -46,8 +42,8 @@
             color: var(--text);
             padding: 12px;
             padding-top: calc(12px + env(safe-area-inset-top, 0px));
-            /* 底部固定 CTA 的避让 */
-            padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+            /* 底部固定栏（CTA 按钮 + 导出长框）的避让 */
+            padding-bottom: calc(116px + env(safe-area-inset-bottom, 0px));
             -webkit-font-smoothing: antialiased;
             font-size: 15px;
             line-height: 1.4;
@@ -344,7 +340,7 @@
         }
         /* 预览框：沿用旧版朴素样式（浅灰底 + 细边框），无渐变无花纹 */
         .preview-canvas {
-            flex: 0 1 364px;
+            flex: 0 1 368px;
             min-width: 0;
             padding: 5px;
             border-radius: 8px;
@@ -367,7 +363,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            width: 52px;
+            width: 48px;
             flex-shrink: 0;
         }
         .side-btn {
@@ -401,66 +397,49 @@
             box-shadow: 0 1px 4px rgba(255, 204, 2, 0.25);
         }
 
-        /* ── 导出设置 ── */
-        .export-head {
+        /* ── 底栏一行式：选项药丸 + 分隔线 + 按钮 ── */
+        .export-row {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            -webkit-user-select: none;
-            user-select: none;
+            gap: 12px;
         }
-        .export-title { font-size: 15px; font-weight: 600; color: var(--text); }
-        .export-body {
-            margin-top: 12px;
-            max-height: 200px;
-            overflow: hidden;
-            transition: max-height 0.3s ease, margin-top 0.3s ease, opacity 0.25s ease;
-            opacity: 1;
-        }
-        .export-body.collapsed {
-            max-height: 0;
-            margin-top: 0;
-            opacity: 0;
-        }
-        .export-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .export-item:last-child { margin-bottom: 0; }
-        .export-label {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text2);
-            min-width: 48px;
+        .cta-divider {
+            width: 1px;
+            height: 52px;
+            background: #C8C8D0;
             flex-shrink: 0;
         }
 
-        /* ── 分段控件 ── */
+        /* ── 分段控件（独立药丸，无外框无底槽） ── */
         .seg {
             display: flex;
-            background: rgba(118, 118, 128, 0.1);
-            border-radius: 8px;
-            padding: 2px;
-            flex: 1;
+            gap: 6px;
+            flex-shrink: 0;
         }
         .seg input { display: none; }
         .seg label {
-            flex: 1;
-            text-align: center;
-            padding: 6px 0;
+            width: 46px;
+            height: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 13px;
             font-weight: 600;
-            color: var(--text);
-            border-radius: 7px;
+            font-family: var(--font);
+            color: var(--text2);
+            background: #FFF;
+            border: 0.5px solid var(--border);
+            border-radius: 9px;
             cursor: pointer;
             transition: all 0.2s;
+            -webkit-user-select: none;
+            user-select: none;
         }
         .seg input:checked + label {
-            background: #FFF;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 0.5px 1px rgba(0, 0, 0, 0.04);
+            background: linear-gradient(135deg, #34C759, #30B350);
+            border-color: transparent;
+            color: #FFF;
+            box-shadow: 0 1px 4px rgba(52, 199, 89, 0.25);
         }
 
         /* ── 底部固定 CTA ── */
@@ -479,20 +458,22 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            width: 100%;
-            padding: 14px;
+            gap: 5px;
+            flex: 1;
+            min-width: 0;
+            height: 46px;
+            padding: 0 5px;
+            white-space: nowrap;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             background: linear-gradient(135deg, #34C759, #30B350);
             color: #FFF;
-            font-size: 16px;
+            font-size: 13px;
             font-weight: 600;
             font-family: var(--font);
             cursor: pointer;
             box-shadow: 0 2px 8px rgba(52, 199, 89, 0.25);
             transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
-            letter-spacing: 0.3px;
         }
         .cta-btn:active { transform: scale(0.97); box-shadow: 0 1px 4px rgba(52, 199, 89, 0.25); }
         .cta-btn:disabled { opacity: 0.7; }
@@ -548,7 +529,7 @@
         <!-- Header -->
         <div class="header">
             <h1>好莳威汀水台</h1>
-            <span class="ver">v3.0</span>
+            <span class="ver">v3.0格丽诗版</span>
         </div>
 
         <!-- 基本信息 -->
@@ -673,41 +654,26 @@
             <input type="file" id="photoFile" accept="image/*" style="display:none;">
         </div>
 
-        <!-- 导出设置 -->
-        <div class="card">
-            <div class="export-head" id="exportHead">
-                <span class="export-title">导出设置</span>
-                <div class="panel-actions">
-                    <button type="button" class="toggle-btn" id="toggleExportBtn" title="展开/折叠">+</button>
-                </div>
-            </div>
-            <div class="export-body collapsed" id="exportContent">
-                <div class="export-item">
-                    <span class="export-label">分辨率</span>
-                    <div class="seg">
-                        <input type="radio" name="resolution" id="res4k" value="4k" checked><label for="res4k">4K</label>
-                        <input type="radio" name="resolution" id="res1k" value="1k"><label for="res1k">1K</label>
-                    </div>
-                </div>
-                <div class="export-item">
-                    <span class="export-label">格式</span>
-                    <div class="seg">
-                        <input type="radio" name="format" id="fmtJpg" value="jpg" checked><label for="fmtJpg">JPG</label>
-                        <input type="radio" name="format" id="fmtPng" value="png"><label for="fmtPng">PNG</label>
-                    </div>
-                </div>
-            </div>
-        </div>
-
     </div>
 
     <!-- 底部固定 CTA -->
     <div class="cta-wrap">
         <div class="cta-inner">
-            <button type="button" class="cta-btn" id="generateBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                <span id="generateBtnText">生成并保存图片</span>
-            </button>
+            <div class="export-row">
+                <div class="seg">
+                    <input type="radio" name="resolution" id="res4k" value="4k" checked><label for="res4k">4K</label>
+                    <input type="radio" name="resolution" id="res1k" value="1k"><label for="res1k">1K</label>
+                </div>
+                <div class="seg">
+                    <input type="radio" name="format" id="fmtJpg" value="jpg" checked><label for="fmtJpg">JPG</label>
+                    <input type="radio" name="format" id="fmtPng" value="png"><label for="fmtPng">PNG</label>
+                </div>
+                <span class="cta-divider"></span>
+                <button type="button" class="cta-btn" id="generateBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    <span id="generateBtnText">生成并保存图片</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -822,8 +788,6 @@
             resetNameBtn: document.getElementById('resetNameBtn'),
             nameHSlider: document.getElementById('nameHSlider'),
             nameVSlider: document.getElementById('nameVSlider'),
-            toggleExportBtn: document.getElementById('toggleExportBtn'),
-            exportContent: document.getElementById('exportContent'),
             previewCanvas: document.getElementById('previewCanvas'),
             previewWrap: document.getElementById('previewWrap'),
             refreshBtn: document.getElementById('refreshBtn'),
@@ -894,16 +858,6 @@
                 syncSliderLabels(); updatePreview();
             });
 
-            /* 导出设置：独立折叠 */
-            const setExport = (collapsed) => {
-                elements.exportContent.classList.toggle('collapsed', collapsed);
-                elements.toggleExportBtn.textContent = collapsed ? '+' : '−';
-            };
-            const flipExport = () => setExport(!elements.exportContent.classList.contains('collapsed'));
-
-            setExport(true);
-            elements.toggleExportBtn.addEventListener('click', (e) => { e.stopPropagation(); flipExport(); });
-            document.getElementById('exportHead').addEventListener('click', flipExport);
         }
 
         /* 加载底板。
