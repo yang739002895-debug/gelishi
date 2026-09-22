@@ -529,7 +529,7 @@
         <!-- Header -->
         <div class="header">
             <h1>好莳威汀水台</h1>
-            <span class="ver">v3.0格丽诗版</span>
+            <span class="ver">v3.10格丽诗版</span>
         </div>
 
         <!-- 基本信息 -->
@@ -701,10 +701,12 @@
 
     <script>
         /* ================================================================
-           底板：竖版 3545 × 5906
-           版式常量来源：PIL 像素差分（效果图 − back.png）+ 字体轮廓度量反算
-           底板自带内容（不要重复绘制）：顶部横线、四角花纹、格丽诗英文与酒店名
-           App 需要自己绘制：宴席类型 / 厅时段 / 新郎名 / 新娘名 / 用户照片
+           底板：方版 2816 × 3072（素材\新\back.png，原图 4159×4536 已等比缩到画布尺寸）
+           版式常量来源：PIL 像素差分（效果图 2816×3072 − back.png）+ 字体轮廓度量反算
+           底板自带内容（不要重复绘制）：厅时段外框花纹、底部 Grace 与两侧短线
+           底板**不含**任何文字，也不再含顶部横线 —— 下列内容全部由 App 绘制：
+             顶部横线 / 宴席类型 / 厅时段 / 新郎名 / 新娘名 / 用户照片
+           导出分辨率：4K = 2816×3072（= 甲方效果图分辨率），1K = 1408×1536
            ================================================================ */
         const BACKGROUND_URL = "./back.png";
         // file:// 双击打开时改用同目录的 back-data.js（内嵌底板的 base64 版），
@@ -715,45 +717,45 @@
         const FONT_URL = "./FZXiaoBiaoSong-B05S.woff2";
         const BASE_FONT_SIZE = 192;
 
-        const CANVAS_W = 3545;
-        const CANVAS_H = 5906;
-        const TEXT_COLOR = "rgba(86, 53, 11, 1)";          // #56350B
+        const CANVAS_W = 2816;
+        const CANVAS_H = 3072;
+        const TEXT_COLOR = "rgba(86, 53, 11, 1)";          // #56350B（量自效果图）
 
-        // x / y 是 canvas fillText 的笔位与基线（画布坐标系，3545×5906）
+        // size      = 字号（画布像素），按「效果图墨迹宽度 ÷ 本字体墨迹宽度」反算
+        // inkCenterY= 效果图上该行文字的墨迹中心 y（画布坐标系 2816×3072）
+        // 笔位 x 不再用固定左起点，由运行时对齐规则算出
         const LAYOUT = {
-            hall:  { x:  892.0, y: 1200.2, size: 357.2 },  // 厅时段（加粗绘制）；原测量 858.1，按需求累计右移 33.9（18 + 15.9）
-            type:  { x: 2427.2, y:  461.2, size: 324.4 },  // 宴席类型（横线右侧）
-            groom: { x:  828.7, y: 4557.2, size: 362.6 },  // 新郎姓名
-            bride: { x:  827.7, y: 5062.7, size: 362.6 }   // 新娘姓名
+            // 厅时段：水平居中于画布中心；超过 5 字按 5/n 缩字号（总宽≈五字）
+            hall: { size: 210.9, inkCenterX: 1407.5, inkCenterY: 615 },
+            // 宴席类型：墨迹右端固定 = 2677（三字「联姻宴」时效果图量得的位置）
+            type: { size: 217.5, inkRight: 2677, inkCenterY: 228 },
+            // 新郎/新娘同一行，整块水平居中；两段之间固定间隙 118（效果图量得的墨迹间隙）
+            name: { size: 190.5, inkCenterY: 2713.5, gap: 118 }
         };
+
+        // 本字体 CJK 墨迹 ascent / descent 与字号的比例（量自 FZXiaoBiaoSong：
+        // 400px 时墨迹 ascent 337.5、descent 56.25 / 50）。
+        // 用途：把「墨迹中心」换算成 fillText 的基线 —— 这样字号变大变小时，
+        // 文字的墨迹中心始终钉在效果图的位置上，不会因缩字号而整体下沉。
+        const INK_RATIO = { hall: 0.3516, type: 0.3516, name: 0.3594 };
+        function baselineOf(centerY, sizeCanvas, ratio) { return centerY + ratio * sizeCanvas; }
 
         // 姓名输入形如「新郎：张三」（名字两个字）时，中间插入一个全角空格
         // 这是原版 v2.0 的行为；置为 false 则完全按用户输入原样输出
         const SPACING_TWO_CHAR_NAME = true;
 
-        // 姓名整块是否水平居中于画布。
-        // true  = 按「新郎/新娘两行中较宽的一行」水平居中，两行左边界对齐；
-        //         此时 LAYOUT.groom.x / bride.x 不再作为起点，仍可用「姓名位置」左右滑杆微调
-        // false = 回到固定的左起点（LAYOUT.groom.x / bride.x）
-        const NAME_AUTO_CENTER = true;
+        // 姓名：新郎/新娘在**同一行**（不再是上下两行），整块水平居中于画布，
+        // 仍可用「姓名位置」的左右/上下滑杆和字号滑杆微调
 
-        // 照片窗口（底板上的纯白留白区，1:1 覆盖）
-        const PHOTO = { x: 133, y: 1957, w: 3279, h: 1993 };
+        // 照片窗口（画布坐标；量自效果图：照片四边墨迹跃变处 96 / 915 / 2720 / 2512）
+        const PHOTO = { x: 96, y: 915, w: 2624, h: 1597 };
 
-        // 顶部横线（back.png 里烘焙的）量测结果（PIL 逐像素）：y 347-354 共 8px，
-        // x 126-2326，纯黑系剖面，周边近白背景 rgb(254,254,254)。
-        // 宴席类型文字右端固定为三字位置；横线右端 = 文字左端 - gap（两字变长 / 四字变短）
-        const HALL_LINE = {
-            yTop: 347, h: 8, x0: 126, xEnd: 2326,
-            bg: "rgb(254, 254, 254)",
-            gap: 101.2,   // = LAYOUT.type.x - xEnd，保证三字输入时完全复刻原版
-            // 原线纵剖面逐行颜色（x=1200 处取样），延长段照此复刻实现无缝拼接
-            profile: ["rgb(54,47,46)", "rgb(51,44,43)", "rgb(5,4,4)", "rgb(0,0,0)",
-                      "rgb(0,0,0)", "rgb(24,21,20)", "rgb(51,44,43)", "rgb(134,130,129)"]
+        // 顶部横线：新版底板里已去掉，**完全由程序绘制**。
+        // 量自效果图：实心部分 y 229-232（4px），左端 x=120，三字「联姻宴」时右端 x=1970；
+        // 横线右端 = 宴席类型墨迹左端 − gap，随字数伸缩，间距恒定
+        const TOP_LINE = {
+            y: 229, h: 4, x0: 120, gap: 59, color: "#000000"
         };
-
-        // 只有新郎没有新娘时，新郎下移的补偿量
-        const SINGLE_GROOM_SHIFT = 225;
 
         // 导出分辨率
         const RES_HI = { width: CANVAS_W, height: CANVAS_H };
@@ -1102,73 +1104,71 @@
             const fontScale = s;                    // 画布逻辑字号 → 实际字号
             const globalMaxW = CANVAS_W - 40;       // 画布安全宽度
 
-            // 厅时段：常规 5 字；超过 5 字时按 5/n 缩小字号（总宽≈五字），
-            // 并上移字号差的一半（6 字约 30 画布像素），保证与五字情况大致对齐
+            // 厅时段：水平居中于画布中心（新版式是居中，不再是固定左起点）；
+            // 超过 5 字时按 5/n 缩小字号（总宽≈五字），保证仍装得进底板的花纹框
             if (hallTime) {
-                const want = LAYOUT.hall.size * fontScale;
+                let want = LAYOUT.hall.size * fontScale;
                 const charCount = [...hallTime].length;
-                let want2 = want;
-                if (charCount > 5) want2 = want * 5 / charCount;
-                const size = fitFontSize(ctx, hallTime, want2, (globalMaxW - LAYOUT.hall.x) * s);
-                const rise = (want - size) / 2;
-                drawBoldText(ctx, LAYOUT.hall.x * s, (LAYOUT.hall.y - rise) * s, hallTime, loadFont(size), TEXT_COLOR);
-            }
-
-            // 宴席类型：右端固定为三字时的右端（用实际字体现场量「联姻宴」宽度）；
-            // 左侧横线右端 = 文字左端 - gap，随字数伸缩，间距恒定
-            if (weddingType) {
-                const want = LAYOUT.type.size * fontScale;
+                if (charCount > 5) want = want * 5 / charCount;
+                want = fitFontSize(ctx, hallTime, want, (CANVAS_W - 40) * s);
                 ctx.font = loadFont(want);
-                const xRight = LAYOUT.type.x * s + ctx.measureText("联姻宴").width;
-                // 整块（横线起点 + 间距 + 文字）不许超出画布安全区
-                const avail = xRight - (HALL_LINE.x0 + HALL_LINE.gap) * s;
-                const size = fitFontSize(ctx, weddingType, want, avail);
+                const hm = ctx.measureText(hallTime);
+                // 让「墨迹中心」落在画布中心：笔位 = 中心 − 墨迹宽/2
+                // ★ 单位：ctx.font 用的是 want（已是设备字号 = 逻辑字号 × s），
+                //   所以 measureText 出来的墨迹宽度也是**设备像素**，这里不能再乘 s。
+                //   （旧写法 (1407.5 − ink宽_dev/2) × s 相当于多乘了一次 s：
+                //     s=1 时（4K 导出）看不出问题，s≈0.25 时（页面预览）会右移约 390 画布像素。）
+                const hx = LAYOUT.hall.inkCenterX * s
+                         - (hm.actualBoundingBoxRight - hm.actualBoundingBoxLeft) / 2;
+                const hy = baselineOf(LAYOUT.hall.inkCenterY, want / s, INK_RATIO.hall) * s;
+                drawText(ctx, hx, hy, hallTime, loadFont(want), TEXT_COLOR);
+            }
+
+            // 宴席类型：墨迹右端固定；左侧横线由程序绘制，
+            // 横线右端 = 文字墨迹左端 − gap，随字数伸缩，间距恒定（三字时与效果图完全一致）
+            if (weddingType) {
+                const maxInk = LAYOUT.type.inkRight - TOP_LINE.x0 - TOP_LINE.gap - 1;  // 横线+间距+文字要放得下
+                let size = LAYOUT.type.size * fontScale;
                 ctx.font = loadFont(size);
-                const tx = xRight - ctx.measureText(weddingType).width;
-
-                const newEnd = tx - HALL_LINE.gap * s;
-                if (newEnd > HALL_LINE.xEnd * s + 1) {
-                    // 横线变长（如两字）：从原右端向右逐行复刻剖面，无缝延长
-                    const xStart = HALL_LINE.xEnd * s + 1;
-                    for (let i = 0; i < HALL_LINE.h; i++) {
-                        ctx.fillStyle = HALL_LINE.profile[i];
-                        ctx.fillRect(xStart, (HALL_LINE.yTop + i) * s, newEnd - xStart, 1 * s);
-                    }
-                } else if (newEnd < HALL_LINE.xEnd * s - 1) {
-                    // 横线变短（如四字）：用背景色盖掉右段（该区域是干净的近白背景）
-                    ctx.fillStyle = HALL_LINE.bg;
-                    ctx.fillRect(newEnd + 1, (HALL_LINE.yTop - 4) * s,
-                                 (HALL_LINE.xEnd - newEnd + 20) * s, (HALL_LINE.h + 8) * s);
+                let tm = ctx.measureText(weddingType);
+                let inkW = tm.actualBoundingBoxLeft + tm.actualBoundingBoxRight;
+                if (inkW > maxInk * s) {
+                    size *= (maxInk * s) / inkW;      // 字太多时整体缩字号，保证不与横线左端打架
+                    ctx.font = loadFont(size);
+                    tm = ctx.measureText(weddingType);
                 }
-                drawText(ctx, tx, LAYOUT.type.y * s, weddingType, loadFont(size), TEXT_COLOR);
+                const tx = LAYOUT.type.inkRight * s - tm.actualBoundingBoxRight;
+                const inkLeft = tx - tm.actualBoundingBoxLeft;
+
+                const lineRight = inkLeft - TOP_LINE.gap * s;
+                if (lineRight > TOP_LINE.x0 * s + 1) {
+                    ctx.fillStyle = TOP_LINE.color;
+                    ctx.fillRect(TOP_LINE.x0 * s, TOP_LINE.y * s,
+                                 lineRight - TOP_LINE.x0 * s, TOP_LINE.h * s);
+                }
+                drawText(ctx, tx, baselineOf(LAYOUT.type.inkCenterY, size / s, INK_RATIO.type) * s,
+                         weddingType, loadFont(size), TEXT_COLOR);
             }
 
-            // 姓名：先量出两行各自的实际宽度，再决定水平起点
-            let gym = (LAYOUT.groom.y + nameOffsetY) * s;
-            let bym = (LAYOUT.bride.y + nameOffsetY) * s;
-            if (groom && !bride) gym += SINGLE_GROOM_SHIFT * s;
-
-            let gSize = 0, gW = 0, bSize = 0, bW = 0;
-            if (groom) {
-                const want = LAYOUT.groom.size * (nameScale / 100) * fontScale;
-                gSize = fitFontSize(ctx, groom, want, globalMaxW * s);
-                ctx.font = loadFont(gSize);
-                gW = ctx.measureText(groom).width;
+            // 姓名：新郎 / 新娘在**同一行**，整块水平居中；两段之间固定间隙
+            const nameParts = [];
+            for (const txt of [groom, bride]) {
+                if (!txt) continue;
+                const want = LAYOUT.name.size * (nameScale / 100) * fontScale;
+                const size = fitFontSize(ctx, txt, want, globalMaxW * s);
+                ctx.font = loadFont(size);
+                nameParts.push({ txt, size, w: ctx.measureText(txt).width });
             }
-            if (bride) {
-                const want = LAYOUT.bride.size * (nameScale / 100) * fontScale;
-                bSize = fitFontSize(ctx, bride, want, globalMaxW * s);
-                ctx.font = loadFont(bSize);
-                bW = ctx.measureText(bride).width;
+            if (nameParts.length) {
+                const gapPx = LAYOUT.name.gap * s;
+                const total = nameParts.reduce((a, o) => a + o.w, 0) + gapPx * (nameParts.length - 1);
+                let nx = (renderW - total) / 2 + nameOffsetX * s;
+                for (const o of nameParts) {
+                    const ny = (baselineOf(LAYOUT.name.inkCenterY, o.size / s, INK_RATIO.name) + nameOffsetY) * s;
+                    drawText(ctx, nx, ny, o.txt, loadFont(o.size), TEXT_COLOR);
+                    nx += o.w + gapPx;
+                }
             }
-
-            // 水平起点：整块居中（按两行中较宽的一行算，两行左边界对齐）；滑杆仍可微调
-            const nx = (NAME_AUTO_CENTER
-                ? (renderW - Math.max(gW, bW)) / 2
-                : LAYOUT.groom.x * s) + nameOffsetX * s;
-
-            if (groom) drawText(ctx, nx, gym, groom, loadFont(gSize), TEXT_COLOR);
-            if (bride) drawText(ctx, nx, bym, bride, loadFont(bSize), TEXT_COLOR);
 
             // 用户照片：等比覆盖裁切后铺满照片窗口
             if (userImageBase64) {

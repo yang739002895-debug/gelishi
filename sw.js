@@ -1,4 +1,6 @@
-const CACHE_NAME = 'wedding-pwa-ui-v9'; // 第 9 稿（底栏改一行式：药丸+分隔线+按钮；选图/刷新按钮收窄 48px、预览框 368px）；缓存优先，每次改文件都必须改这个版本号
+const CACHE_NAME = 'gelishi-pwa-v3'; // 方版（底板 2816×3072，4K 输出即 2816×3072）；缓存优先，每次改文件都必须改这个版本号
+// v2: 修掉厅时段在「页面预览」里右移约 390 画布像素的 bug（measureText 单位混用，导出一直是正确的）
+// v3: 版本标识改为 v3.10格丽诗版（显示版本按 +0.01 递增，与缓存号无关）
 const urlsToCache = [
   './index.html',
   './manifest.json',
@@ -22,7 +24,10 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
-      keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
+      // 只清自己这套缓存：caches.keys() 是整个源的，全清会顺手删掉同源其它
+      // 版本（比如旧的 UI升级版）的离线缓存
+      keys.filter(k => k.indexOf('gelishi-pwa-') === 0 && k !== CACHE_NAME)
+          .map(k => caches.delete(k))
     )).then(() => self.clients.claim())
   );
 });
