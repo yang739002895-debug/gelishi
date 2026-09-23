@@ -1,6 +1,7 @@
-const CACHE_NAME = 'gelishi-pwa-v3'; // 方版（底板 2816×3072，4K 输出即 2816×3072）；缓存优先，每次改文件都必须改这个版本号
+const CACHE_NAME = 'gelishi-pwa-v4'; // 方版（底板 2816×3072，4K 输出即 2816×3072）；缓存优先，每次改文件都必须改这个版本号
 // v2: 修掉厅时段在「页面预览」里右移约 390 画布像素的 bug（measureText 单位混用，导出一直是正确的）
 // v3: 版本标识改为 v3.10格丽诗版（显示版本按 +0.01 递增，与缓存号无关）
+// v4: 选图 input 去掉 accept="image/*"，不限制文件类型（校验仍走 MIME 白名单）
 const urlsToCache = [
   './index.html',
   './manifest.json',
